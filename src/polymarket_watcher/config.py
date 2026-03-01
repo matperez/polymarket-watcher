@@ -11,6 +11,8 @@ class Config:
     database_path: str
     gamma_base_url: str
     clob_base_url: str
+    api_host: str
+    api_port: int
     live_market_slug: str | None
     live_token_id: str | None
     live_condition_id: str | None
@@ -39,6 +41,8 @@ def load_config() -> Config:
             "GAMMA_BASE_URL", "https://gamma-api.polymarket.com"
         ),
         clob_base_url=os.environ.get("CLOB_BASE_URL", "https://clob.polymarket.com"),
+        api_host=os.environ.get("API_HOST", "0.0.0.0"),
+        api_port=_int_env("API_PORT", 8080),
         live_market_slug=os.environ.get("LIVE_MARKET_SLUG") or None,
         live_token_id=os.environ.get("LIVE_TOKEN_ID") or None,
         live_condition_id=os.environ.get("LIVE_CONDITION_ID") or None,

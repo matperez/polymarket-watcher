@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from polymarket_watcher.db import get_connection, init_db
+from polymarket_watcher.db import get_connection
 
 
 class AddWatchedBody(BaseModel):

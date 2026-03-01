@@ -11,6 +11,8 @@ def test_load_config_returns_object_with_expected_fields_and_defaults():
         "DATABASE_PATH",
         "GAMMA_BASE_URL",
         "CLOB_BASE_URL",
+        "API_HOST",
+        "API_PORT",
         "LIVE_MARKET_SLUG",
         "LIVE_TOKEN_ID",
         "LIVE_CONDITION_ID",
@@ -25,6 +27,8 @@ def test_load_config_returns_object_with_expected_fields_and_defaults():
     assert cfg.database_path == "./data/watcher.db"
     assert cfg.gamma_base_url == "https://gamma-api.polymarket.com"
     assert cfg.clob_base_url == "https://clob.polymarket.com"
+    assert cfg.api_host == "0.0.0.0"
+    assert cfg.api_port == 8080
     assert cfg.live_market_slug is None
     assert cfg.live_token_id is None
     assert cfg.live_condition_id is None

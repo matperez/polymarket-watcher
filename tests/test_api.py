@@ -5,6 +5,7 @@ from pathlib import Path
 
 import httpx
 import pytest
+
 from polymarket_watcher.api import create_app
 from polymarket_watcher.db import get_connection, init_db
 

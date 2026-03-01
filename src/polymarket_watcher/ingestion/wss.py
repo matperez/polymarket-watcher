@@ -68,8 +68,11 @@ async def _ws_loop(
     url: str = WSS_URL,
     reconnect_delay: float = 5.0,
     max_reconnect_delay: float = 300.0,
+    stop_event: threading.Event | None = None,
 ):
     while True:
+        if stop_event and stop_event.is_set():
+            break
         try:
             async with websockets.connect(url) as ws:
                 await ws.send(json.dumps(_subscribe_message(asset_ids)))
@@ -106,6 +109,8 @@ async def _ws_loop(
                             on_tick(cid, t, price, ev)
         except Exception as e:
             logger.warning("WebSocket error %s, reconnecting in %.0fs", e, reconnect_delay)
+        if stop_event and stop_event.is_set():
+            break
         await asyncio.sleep(reconnect_delay)
         reconnect_delay = min(reconnect_delay * 1.5, max_reconnect_delay)
 
@@ -116,6 +121,7 @@ def run_ws_in_thread(
     on_tick: Callable[[str, int, float, str], None],
     on_resolved: Callable[[str, str | None], None],
     url: str = WSS_URL,
+    stop_event: threading.Event | None = None,
 ) -> threading.Thread:
     """Run WebSocket loop in daemon thread. on_tick(cid,t,price,ev); on_resolved(cid,outcome)."""
     def target():
@@ -126,6 +132,7 @@ def run_ws_in_thread(
                 on_tick=on_tick,
                 on_resolved=on_resolved,
                 url=url,
+                stop_event=stop_event,
             )
         )
 
