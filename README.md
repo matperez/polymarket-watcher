@@ -27,7 +27,8 @@ pip install -e ../polymarket
 | `GAMMA_BASE_URL` | `https://gamma-api.polymarket.com` | Gamma API base |
 | `CLOB_BASE_URL` | `https://clob.polymarket.com` | CLOB API base |
 | `LIVE_MARKET_SLUG` | — | Slug for live WebSocket (optional) |
-| `LIVE_TOKEN_ID` | — | Token ID for live market (alternative to slug) |
+| `LIVE_TOKEN_ID` | — | Token ID (Yes) for live market; required with `LIVE_CONDITION_ID` for WSS |
+| `LIVE_CONDITION_ID` | — | Condition ID for live market (for DB and live PF) |
 | `GAMMA_POLL_INTERVAL_MIN` | 10 | Minutes between Gamma polls |
 | `CLOB_POLL_INTERVAL_MIN` | 15 | Minutes between CLOB price fetches |
 | `BRIER_JOB_INTERVAL_MIN` | 15 | Minutes between Brier job runs |
@@ -42,14 +43,25 @@ python -m polymarket_watcher
 
 ## Docker
 
-Build (from repo root; predmkt_sim can be installed from sibling polymarket):
+Build from **parent directory** that contains both `polymarket` and `polymarket-watcher` (predmkt_sim is installed from sibling polymarket):
 
 ```bash
-docker build -t polymarket-watcher .
-docker run -v $(pwd)/data:/data -e LIVE_MARKET_SLUG=your-slug polymarket-watcher
+cd ~/projects
+docker build -f polymarket-watcher/Dockerfile -t polymarket-watcher .
+docker run -v $(pwd)/data:/data -e DATABASE_PATH=/data/watcher.db polymarket-watcher
 ```
 
-Data is stored in the mounted volume at `/data/watcher.db` (set `DATABASE_PATH=/data/watcher.db` in container).
+With live WebSocket and PF:
+
+```bash
+docker run -v $(pwd)/data:/data \
+  -e DATABASE_PATH=/data/watcher.db \
+  -e LIVE_TOKEN_ID=<token_id_yes> \
+  -e LIVE_CONDITION_ID=<condition_id> \
+  polymarket-watcher
+```
+
+Data is stored in the mounted volume at `/data/watcher.db`.
 
 ## Tests and lint
 

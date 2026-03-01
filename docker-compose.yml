@@ -1,0 +1,14 @@
+# Run from parent dir: cd ~/projects && docker compose -f polymarket-watcher/docker-compose.yml up -d
+services:
+  watcher:
+    build:
+      context: ..
+      dockerfile: polymarket-watcher/Dockerfile
+    image: polymarket-watcher
+    volumes:
+      - ./data:/data
+    environment:
+      - DATABASE_PATH=/data/watcher.db
+      # - LIVE_TOKEN_ID=
+      # - LIVE_CONDITION_ID=
+    restart: unless-stopped
