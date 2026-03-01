@@ -2,7 +2,7 @@
 
 import time
 
-from predmkt_sim.particle_filter import PredictionMarketParticleFilter
+from polymarket_watcher.models import PredictionMarketParticleFilter
 
 
 def _outcome_to_int(resolution_outcome: str | None) -> int | None:
@@ -41,7 +41,7 @@ def run_pf_backtest(
         if len(series) < 2:
             continue
         pf = PredictionMarketParticleFilter(
-            N_particles=n_particles,
+            n_particles=n_particles,
             prior_prob=prior_prob,
         )
         for t, p in series:

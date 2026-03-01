@@ -1,9 +1,7 @@
-# Run from parent dir: cd ~/projects && docker compose -f polymarket-watcher/docker-compose.yml up -d
+# Run from repo root: docker compose up -d
 services:
   watcher:
-    build:
-      context: ..
-      dockerfile: polymarket-watcher/Dockerfile
+    build: .
     image: polymarket-watcher
     volumes:
       - ./data:/data

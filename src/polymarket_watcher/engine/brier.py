@@ -2,7 +2,7 @@
 
 import time
 
-from predmkt_sim.monte_carlo import brier_score
+from polymarket_watcher.models import brier_score
 
 
 def _outcome_to_int(resolution_outcome: str | None) -> int | None:

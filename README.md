@@ -1,6 +1,6 @@
 # polymarket-watcher
 
-Background service that continuously validates hypotheses on Polymarket: Brier score on resolved markets, particle filter backtest on price history, and one live particle filter over WebSocket. Uses [predmkt_sim](https://github.com/your-org/polymarket) for model code.
+Background service that validates hypotheses on Polymarket: Brier score on resolved markets, particle filter backtest on price history, and one live particle filter over WebSocket. Model code (Brier, particle filter from the Quant Desk article) is included in the project.
 
 ## Setup
 
@@ -11,12 +11,6 @@ cd polymarket-watcher
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-```
-
-Install **predmkt_sim** for engine (Brier, particle filter):
-
-```bash
-pip install -e ../polymarket
 ```
 
 ## Config (env)
@@ -43,11 +37,11 @@ python -m polymarket_watcher
 
 ## Docker
 
-Build from **parent directory** that contains both `polymarket` and `polymarket-watcher` (predmkt_sim is installed from sibling polymarket):
+Build from **repo root** (no external deps):
 
 ```bash
-cd ~/projects
-docker build -f polymarket-watcher/Dockerfile -t polymarket-watcher .
+cd polymarket-watcher
+docker build -t polymarket-watcher .
 docker run -v $(pwd)/data:/data -e DATABASE_PATH=/data/watcher.db polymarket-watcher
 ```
 

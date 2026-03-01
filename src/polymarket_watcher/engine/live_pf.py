@@ -2,7 +2,7 @@
 
 import time
 
-from predmkt_sim.particle_filter import PredictionMarketParticleFilter
+from polymarket_watcher.models import PredictionMarketParticleFilter
 
 
 def _outcome_to_int(outcome: str | int | None) -> int:
@@ -29,7 +29,7 @@ class LivePFUpdater:
     ):
         self.condition_id = condition_id
         self._pf = PredictionMarketParticleFilter(
-            N_particles=n_particles,
+            n_particles=n_particles,
             prior_prob=prior_prob,
         )
         self._started_at: int | None = None

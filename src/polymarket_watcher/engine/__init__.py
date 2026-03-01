@@ -1,1 +1,1 @@
-"""Engine layer: read SQLite, run predmkt_sim, write aggregates."""
+"""Engine layer: read SQLite, run Brier/PF models, write aggregates."""
