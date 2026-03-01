@@ -105,4 +105,39 @@ def create_app(database_path: str | Path) -> FastAPI:
         finally:
             conn.close()
 
+    @app.get("/watched/{condition_id}/summary")
+    def get_watched_summary(condition_id: str) -> dict[str, Any]:
+        conn = get_connection(app.state.database_path)
+        try:
+            cur = conn.execute(
+                "SELECT 1 FROM watched_markets WHERE condition_id = ?", (condition_id,)
+            )
+            if cur.fetchone() is None:
+                raise HTTPException(404, "not found")
+            cur = conn.execute(
+                "SELECT resolution_outcome FROM markets WHERE condition_id = ?",
+                (condition_id,),
+            )
+            row = cur.fetchone()
+            resolved = row[0] if row else None
+            cur = conn.execute(
+                "SELECT estimate FROM pf_live_estimates WHERE condition_id = ?"
+                " ORDER BY ts DESC LIMIT 1",
+                (condition_id,),
+            )
+            row = cur.fetchone()
+            last_estimate = row[0] if row else None
+            cur = conn.execute(
+                "SELECT COUNT(*) FROM live_ticks WHERE condition_id = ?",
+                (condition_id,),
+            )
+            ticks_count = cur.fetchone()[0]
+            return {
+                "last_estimate": last_estimate,
+                "ticks_count": ticks_count,
+                "resolved": resolved,
+            }
+        finally:
+            conn.close()
+
     return app
