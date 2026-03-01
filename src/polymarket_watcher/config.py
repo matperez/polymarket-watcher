@@ -13,6 +13,7 @@ class Config:
     clob_base_url: str
     live_market_slug: str | None
     live_token_id: str | None
+    live_condition_id: str | None
     gamma_poll_interval_min: int
     clob_poll_interval_min: int
     brier_job_interval_min: int
@@ -40,6 +41,7 @@ def load_config() -> Config:
         clob_base_url=os.environ.get("CLOB_BASE_URL", "https://clob.polymarket.com"),
         live_market_slug=os.environ.get("LIVE_MARKET_SLUG") or None,
         live_token_id=os.environ.get("LIVE_TOKEN_ID") or None,
+        live_condition_id=os.environ.get("LIVE_CONDITION_ID") or None,
         gamma_poll_interval_min=_int_env("GAMMA_POLL_INTERVAL_MIN", 10),
         clob_poll_interval_min=_int_env("CLOB_POLL_INTERVAL_MIN", 15),
         brier_job_interval_min=_int_env("BRIER_JOB_INTERVAL_MIN", 15),

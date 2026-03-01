@@ -15,6 +15,7 @@ def test_load_config_returns_object_with_expected_fields_and_defaults():
         "CLOB_BASE_URL",
         "LIVE_MARKET_SLUG",
         "LIVE_TOKEN_ID",
+        "LIVE_CONDITION_ID",
         "GAMMA_POLL_INTERVAL_MIN",
         "CLOB_POLL_INTERVAL_MIN",
         "BRIER_JOB_INTERVAL_MIN",
@@ -28,6 +29,7 @@ def test_load_config_returns_object_with_expected_fields_and_defaults():
     assert cfg.clob_base_url == "https://clob.polymarket.com"
     assert cfg.live_market_slug is None
     assert cfg.live_token_id is None
+    assert cfg.live_condition_id is None
     assert cfg.gamma_poll_interval_min == 10
     assert cfg.clob_poll_interval_min == 15
     assert cfg.brier_job_interval_min == 15
