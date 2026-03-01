@@ -80,3 +80,12 @@ CREATE TABLE IF NOT EXISTS pf_live_estimates (
     created_at INTEGER,
     FOREIGN KEY (condition_id) REFERENCES markets(condition_id)
 );
+
+CREATE TABLE IF NOT EXISTS watched_markets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    condition_id TEXT NOT NULL UNIQUE,
+    token_id_yes TEXT NOT NULL,
+    slug TEXT,
+    created_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_watched_markets_condition_id ON watched_markets(condition_id);
