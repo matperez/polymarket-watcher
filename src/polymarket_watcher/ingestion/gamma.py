@@ -1,5 +1,6 @@
 """Gamma API client: fetch closed events and poll into DB."""
 
+import json
 import time
 from datetime import datetime
 
@@ -17,7 +18,16 @@ def _parse_end_date_ts(end_date: str | None) -> int | None:
 
 
 def _normalize_market(m: dict) -> dict:
-    clob_ids = m.get("clobTokenIds") or []
+    raw = m.get("clobTokenIds")
+    if isinstance(raw, str):
+        try:
+            clob_ids = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            clob_ids = []
+    elif isinstance(raw, list):
+        clob_ids = raw
+    else:
+        clob_ids = []
     token_id_yes = clob_ids[0] if len(clob_ids) > 0 else None
     token_id_no = clob_ids[1] if len(clob_ids) > 1 else None
     return {

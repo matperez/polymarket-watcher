@@ -37,18 +37,26 @@ def run() -> None:
     live_pf: LivePFUpdater | None = None
     if cfg.live_token_id and cfg.live_condition_id:
         live_pf = LivePFUpdater(cfg.live_condition_id)
+        db_path = cfg.database_path
 
         def on_tick(condition_id: str, t: int, price: float, event_type: str) -> None:
-            with db_lock:
-                write_tick_to_db(conn, condition_id, t, price, event_type)
+            # SQLite connection must be used in the same thread; WSS runs in another thread
+            wss_conn = get_connection(db_path)
+            try:
+                write_tick_to_db(wss_conn, condition_id, t, price, event_type)
+            finally:
+                wss_conn.close()
             if live_pf and condition_id == cfg.live_condition_id:
                 live_pf.on_tick(price)
 
         def on_resolved(condition_id: str, outcome: str | None) -> None:
-            with db_lock:
-                write_resolved_to_db(conn, condition_id, outcome)
-            if live_pf and condition_id == cfg.live_condition_id:
-                live_pf.on_market_resolved(conn, outcome)
+            wss_conn = get_connection(db_path)
+            try:
+                write_resolved_to_db(wss_conn, condition_id, outcome)
+                if live_pf and condition_id == cfg.live_condition_id:
+                    live_pf.on_market_resolved(wss_conn, outcome)
+            finally:
+                wss_conn.close()
 
         run_ws_in_thread(
             asset_ids=[cfg.live_token_id],

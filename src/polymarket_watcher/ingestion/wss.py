@@ -78,24 +78,32 @@ async def _ws_loop(
                         msg = json.loads(raw) if isinstance(raw, str) else raw
                     except (json.JSONDecodeError, TypeError):
                         continue
-                    event = msg.get("event_type") or msg.get("eventType")
-                    if event == "market_resolved":
-                        aid, out = _parse_resolved(msg)
-                        if aid is not None:
-                            cid = token_to_condition_id.get(aid)
-                            if cid:
-                                on_resolved(cid, out)
-                        continue
-                    tick = _parse_tick(msg)
-                    if tick is None:
-                        continue
-                    t, price, ev = tick
-                    asset_id = msg.get("asset_id") or msg.get("assetId")
-                    if not asset_id and asset_ids:
-                        asset_id = asset_ids[0]
-                    cid = token_to_condition_id.get(asset_id) if asset_id else None
-                    if cid:
-                        on_tick(cid, t, price, ev)
+                    # Server may send a list of messages in one frame
+                    if isinstance(msg, list):
+                        messages = msg
+                    else:
+                        messages = [msg]
+                    for msg in messages:
+                        if not isinstance(msg, dict):
+                            continue
+                        event = msg.get("event_type") or msg.get("eventType")
+                        if event == "market_resolved":
+                            aid, out = _parse_resolved(msg)
+                            if aid is not None:
+                                cid = token_to_condition_id.get(aid)
+                                if cid:
+                                    on_resolved(cid, out)
+                            continue
+                        tick = _parse_tick(msg)
+                        if tick is None:
+                            continue
+                        t, price, ev = tick
+                        asset_id = msg.get("asset_id") or msg.get("assetId")
+                        if not asset_id and asset_ids:
+                            asset_id = asset_ids[0]
+                        cid = token_to_condition_id.get(asset_id) if asset_id else None
+                        if cid:
+                            on_tick(cid, t, price, ev)
         except Exception as e:
             logger.warning("WebSocket error %s, reconnecting in %.0fs", e, reconnect_delay)
         await asyncio.sleep(reconnect_delay)

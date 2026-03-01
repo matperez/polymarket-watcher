@@ -13,6 +13,21 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
+## Auth and LIVE_* IDs
+
+**Токен доступа не нужен.** Сервис только читает данные (рынки, цены, WebSocket). Публичные API Polymarket (Gamma, CLOB) работают без авторизации.
+
+**LIVE_TOKEN_ID и LIVE_CONDITION_ID** — публичные идентификаторы контракта, не секреты. Как получить:
+
+1. Узнай **slug** рынка из URL на polymarket.com (например `will-trump-win-2024`).
+2. Запроси метаданные через Gamma (без ключа):
+   ```bash
+   curl -s "https://gamma-api.polymarket.com/markets/slug/ВАШ_SLUG" | jq '{conditionId, clobTokenIds, question}'
+   ```
+3. В ответе: **conditionId** → `LIVE_CONDITION_ID`, **clobTokenIds[0]** (токен Yes) → `LIVE_TOKEN_ID`.
+
+Без `LIVE_*` сервис тоже работает: опрос Gamma/CLOB, Brier и PF backtest по закрытым рынкам; WebSocket и live PF просто не запускаются.
+
 ## Config (env)
 
 | Variable | Default | Description |

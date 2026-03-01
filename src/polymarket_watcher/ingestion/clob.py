@@ -1,6 +1,10 @@
 """CLOB API client: prices history and Brier snapshot fetcher."""
 
+import logging
+
 import httpx
+
+logger = logging.getLogger(__name__)
 
 
 def fetch_prices_history(
@@ -8,10 +12,11 @@ def fetch_prices_history(
     token_id: str,
     end_ts: int | None = None,
     start_ts: int | None = None,
+    interval: str = "all",
 ) -> list[tuple[int, float]]:
     """Fetch prices-history for token. Returns list of (t, p)."""
     url = f"{base_url.rstrip('/')}/prices-history"
-    params: dict = {"market": token_id}
+    params: dict = {"market": token_id, "interval": interval}
     if end_ts is not None:
         params["endTs"] = end_ts
     if start_ts is not None:
@@ -47,6 +52,10 @@ def price_snapshot_for_brier(
     return best_p
 
 
+# CLOB API rejects "interval too long" when only endTs is set; use a 7-day window
+_CLOB_HISTORY_WINDOW_SEC = 7 * 24 * 3600
+
+
 def poll_clob_snapshots_to_db(
     conn,
     base_url: str,
@@ -65,11 +74,19 @@ def poll_clob_snapshots_to_db(
     for condition_id, token_id_yes, end_date_ts in rows:
         if not token_id_yes or not end_date_ts:
             continue
-        history = fetch_prices_history(
-            base_url=base_url,
-            token_id=token_id_yes,
-            end_ts=end_date_ts,
-        )
+        try:
+            start_ts = max(0, end_date_ts - _CLOB_HISTORY_WINDOW_SEC)
+            history = fetch_prices_history(
+                base_url=base_url,
+                token_id=token_id_yes,
+                start_ts=start_ts,
+                end_ts=end_date_ts,
+            )
+        except httpx.HTTPStatusError as e:
+            logger.debug(
+                "CLOB prices-history skip %s: %s", condition_id[:18], e.response.status_code
+            )
+            continue
         price = price_snapshot_for_brier(history, end_date_ts, hours_before=hours_before)
         if price is None:
             continue
