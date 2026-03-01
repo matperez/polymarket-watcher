@@ -1,4 +1,4 @@
-"""Brier score aggregate job: join markets + price_snapshots, compute Brier, write brier_aggregates."""
+"""Brier job: join markets + price_snapshots, compute Brier, write brier_aggregates."""
 
 import time
 
@@ -17,7 +17,7 @@ def _outcome_to_int(resolution_outcome: str | None) -> int | None:
 
 
 def compute_brier_aggregate(conn, period: str = "all") -> float | None:
-    """Query closed markets with price_snapshots, compute Brier, insert into brier_aggregates. Returns score or None."""
+    """Query closed markets + price_snapshots, compute Brier, insert brier_aggregates."""
     cur = conn.execute(
         """SELECT m.condition_id, m.resolution_outcome, ps.price
            FROM markets m
@@ -43,7 +43,8 @@ def compute_brier_aggregate(conn, period: str = "all") -> float | None:
     score = brier_score(predictions, outcomes)
     now_ts = int(time.time())
     conn.execute(
-        """INSERT INTO brier_aggregates (period, period_start_ts, n_markets, brier_score, updated_at)
+        """INSERT INTO brier_aggregates
+           (period, period_start_ts, n_markets, brier_score, updated_at)
            VALUES (?, NULL, ?, ?, ?)""",
         (period, len(predictions), score, now_ts),
     )

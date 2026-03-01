@@ -1,10 +1,7 @@
 """Tests for DB init and basic operations."""
 
-import sqlite3
 import tempfile
 from pathlib import Path
-
-import pytest
 
 from polymarket_watcher.db import get_connection, init_db
 

@@ -2,8 +2,6 @@
 
 import os
 
-import pytest
-
 from polymarket_watcher.config import load_config
 
 

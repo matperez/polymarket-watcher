@@ -1,7 +1,7 @@
 """Gamma API client: fetch closed events and poll into DB."""
 
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 
 import httpx
 
@@ -91,12 +91,16 @@ def poll_gamma_to_db(
                 continue
             conn.execute(
                 """INSERT INTO markets
-                   (condition_id, token_id_yes, token_id_no, slug, question, end_date_ts, closed, event_slug, updated_at)
+                   (condition_id, token_id_yes, token_id_no, slug, question,
+                    end_date_ts, closed, event_slug, updated_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                    ON CONFLICT(condition_id) DO UPDATE SET
-                   token_id_yes=excluded.token_id_yes, token_id_no=excluded.token_id_no,
-                   slug=excluded.slug, question=excluded.question, end_date_ts=excluded.end_date_ts,
-                   closed=excluded.closed, event_slug=excluded.event_slug, updated_at=excluded.updated_at
+                   token_id_yes=excluded.token_id_yes,
+                   token_id_no=excluded.token_id_no,
+                   slug=excluded.slug, question=excluded.question,
+                   end_date_ts=excluded.end_date_ts,
+                   closed=excluded.closed, event_slug=excluded.event_slug,
+                   updated_at=excluded.updated_at
                    """,
                 (
                     cid,

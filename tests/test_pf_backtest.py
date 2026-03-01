@@ -3,8 +3,6 @@
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from polymarket_watcher.db import get_connection, init_db
 from polymarket_watcher.engine.pf_backtest import run_pf_backtest
 

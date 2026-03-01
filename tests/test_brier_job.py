@@ -3,8 +3,6 @@
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from polymarket_watcher.db import get_connection, init_db
 from polymarket_watcher.engine.brier import compute_brier_aggregate
 

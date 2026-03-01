@@ -5,13 +5,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 import httpx
-import pytest
 
 from polymarket_watcher.db import get_connection, init_db
 from polymarket_watcher.ingestion.clob import (
     fetch_prices_history,
-    price_snapshot_for_brier,
     poll_clob_snapshots_to_db,
+    price_snapshot_for_brier,
 )
 
 _PRICES_HISTORY_RESPONSE = {
@@ -43,8 +42,7 @@ def test_fetch_prices_history_returns_list_of_t_p():
 
 def test_price_snapshot_for_brier_returns_closest_price():
     history = [(1705000000, 0.45), (1705086400, 0.52), (1705172800, 0.55), (1705259200, 0.58)]
-    # end_date_ts - 24h = 1705259200 - 86400 = 1705172800
-    target_ts = 1705259200 - 86400
+    # end_date_ts - 24h -> closest is 1705172800 with p=0.55
     price = price_snapshot_for_brier(history, end_date_ts=1705259200, hours_before=24)
     assert price is not None
     assert price == 0.55  # closest to target_ts is 1705172800 with p=0.55

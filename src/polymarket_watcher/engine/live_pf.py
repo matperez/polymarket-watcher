@@ -1,4 +1,4 @@
-"""Live particle filter: one PF instance per condition_id, on_tick / on_snapshot / on_market_resolved."""
+"""Live PF: one PF per condition_id; on_tick, on_snapshot_interval, on_market_resolved."""
 
 import time
 

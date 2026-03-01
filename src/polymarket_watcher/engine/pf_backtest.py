@@ -1,4 +1,4 @@
-"""Particle filter backtest job: run PF over price_series for closed markets, write particle_filter_runs."""
+"""PF backtest: run particle filter over price_series for closed markets, write runs."""
 
 import time
 
@@ -21,7 +21,7 @@ def run_pf_backtest(
     prior_prob: float = 0.5,
     n_particles: int = 2000,
 ) -> int:
-    """For each closed market with price_series, run particle filter over (t, p), write one row to particle_filter_runs. Returns count of runs."""
+    """Run PF over price_series per closed market; write particle_filter_runs. Return count."""
     cur = conn.execute(
         """SELECT m.condition_id, m.resolution_outcome
            FROM markets m

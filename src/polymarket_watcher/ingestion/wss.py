@@ -109,7 +109,7 @@ def run_ws_in_thread(
     on_resolved: Callable[[str, str | None], None],
     url: str = WSS_URL,
 ) -> threading.Thread:
-    """Run WebSocket loop in a daemon thread. on_tick(condition_id, t, price, event_type); on_resolved(condition_id, outcome_str)."""
+    """Run WebSocket loop in daemon thread. on_tick(cid,t,price,ev); on_resolved(cid,outcome)."""
     def target():
         asyncio.run(
             _ws_loop(

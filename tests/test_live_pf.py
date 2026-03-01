@@ -3,8 +3,6 @@
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from polymarket_watcher.db import get_connection, init_db
 from polymarket_watcher.engine.live_pf import LivePFUpdater
 
@@ -47,7 +45,8 @@ def test_live_pf_on_market_resolved_writes_run():
         updater.on_tick(0.6)
         updater.on_market_resolved(conn, "Yes")
         cur = conn.execute(
-            "SELECT condition_id, run_type, final_estimate, outcome FROM particle_filter_runs WHERE condition_id = '0xc1'"
+            "SELECT condition_id, run_type, final_estimate, outcome FROM particle_filter_runs "
+            "WHERE condition_id = '0xc1'"
         )
         row = cur.fetchone()
         assert row is not None

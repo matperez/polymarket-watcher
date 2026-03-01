@@ -52,7 +52,7 @@ def poll_clob_snapshots_to_db(
     base_url: str,
     hours_before: int = 24,
 ) -> int:
-    """For closed markets missing a price_snapshot, fetch history and insert one row. Returns count inserted."""
+    """Fetch history for closed markets missing snapshot, insert one row each. Return count."""
     cur = conn.execute(
         """SELECT m.condition_id, m.token_id_yes, m.end_date_ts
            FROM markets m

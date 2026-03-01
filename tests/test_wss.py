@@ -3,8 +3,6 @@
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from polymarket_watcher.db import get_connection, init_db
 from polymarket_watcher.ingestion.wss import (
     _parse_resolved,
@@ -70,7 +68,8 @@ def test_write_resolved_to_db():
         conn = get_connection(path)
         init_db(conn)
         conn.execute(
-            "INSERT INTO markets (condition_id, slug, closed, resolution_outcome) VALUES ('0xc1', 'm1', 1, NULL)"
+            "INSERT INTO markets (condition_id, slug, closed, resolution_outcome) "
+            "VALUES ('0xc1', 'm1', 1, NULL)"
         )
         conn.commit()
         write_resolved_to_db(conn, "0xc1", "Yes")
