@@ -17,6 +17,9 @@ dependencies = [
     "scipy>=1.10",
 ]
 
+[project.scripts]
+polymarket-watcher-cli = "polymarket_watcher.cli:main"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
