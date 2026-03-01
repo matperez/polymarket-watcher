@@ -10,7 +10,7 @@ from polymarket_watcher.db import get_connection, init_db
 from polymarket_watcher.engine.brier import compute_brier_aggregate
 from polymarket_watcher.engine.live_pf import LivePFUpdater
 from polymarket_watcher.engine.pf_backtest import run_pf_backtest
-from polymarket_watcher.ingestion.clob import poll_clob_snapshots_to_db
+from polymarket_watcher.ingestion.clob import poll_clob_series_to_db, poll_clob_snapshots_to_db
 from polymarket_watcher.ingestion.gamma import poll_gamma_to_db
 from polymarket_watcher.ingestion.wss import (
     run_ws_in_thread,
@@ -68,10 +68,12 @@ def run() -> None:
 
     last_gamma = 0.0
     last_clob = 0.0
+    last_clob_series = 0.0
     last_brier = 0.0
     last_pf_backtest = 0.0
     last_pf_snapshot = 0.0
     interval_sec = 60  # check every minute
+    clob_series_interval_min = 60  # same as PF backtest
 
     try:
         while True:
@@ -94,6 +96,16 @@ def run() -> None:
                     last_clob = now
                 except Exception as e:
                     logger.exception("CLOB poll failed: %s", e)
+
+            if now - last_clob_series >= clob_series_interval_min * 60:
+                try:
+                    with db_lock:
+                        n = poll_clob_series_to_db(conn, cfg.clob_base_url, max_markets_per_run=5)
+                    if n > 0:
+                        logger.info("CLOB series: %d points", n)
+                    last_clob_series = now
+                except Exception as e:
+                    logger.exception("CLOB series failed: %s", e)
 
             if now - last_brier >= cfg.brier_job_interval_min * 60:
                 try:

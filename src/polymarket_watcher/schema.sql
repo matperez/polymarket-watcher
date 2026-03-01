@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS price_series (
 );
 
 CREATE INDEX IF NOT EXISTS idx_price_series_condition_t ON price_series(condition_id, t);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_price_series_condition_t_unique ON price_series(condition_id, t);
 
 CREATE TABLE IF NOT EXISTS live_ticks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

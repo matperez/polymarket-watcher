@@ -9,6 +9,7 @@ import httpx
 from polymarket_watcher.db import get_connection, init_db
 from polymarket_watcher.ingestion.clob import (
     fetch_prices_history,
+    poll_clob_series_to_db,
     poll_clob_snapshots_to_db,
     price_snapshot_for_brier,
 )
@@ -79,6 +80,33 @@ def test_poll_clob_snapshots_to_db_fetches_and_inserts():
         rows = cur.fetchall()
         assert len(rows) >= 1
         assert rows[0][0] == "0xcond1"
+        conn.close()
+    finally:
+        Path(path).unlink(missing_ok=True)
+
+
+def test_poll_clob_series_to_db_inserts_series():
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
+        path = f.name
+    try:
+        conn = get_connection(path)
+        init_db(conn)
+        conn.execute(
+            """INSERT INTO markets (condition_id, token_id_yes, slug, closed, end_date_ts)
+               VALUES ('0xcond2', 'token-yes-2', 'm2', 1, 1705259200)"""
+        )
+        conn.commit()
+        series = [(1705000000, 0.4), (1705086400, 0.5), (1705172800, 0.55)]
+        with patch(
+            "polymarket_watcher.ingestion.clob.fetch_prices_history_chunked",
+            return_value=series,
+        ):
+            n = poll_clob_series_to_db(conn, "https://clob.polymarket.com", max_markets_per_run=5)
+        assert n == 3
+        cur = conn.execute("SELECT condition_id, t, p FROM price_series ORDER BY t")
+        rows = cur.fetchall()
+        assert len(rows) == 3
+        assert rows[0] == ("0xcond2", 1705000000, 0.4)
         conn.close()
     finally:
         Path(path).unlink(missing_ok=True)

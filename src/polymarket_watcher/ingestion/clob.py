@@ -55,6 +55,48 @@ def price_snapshot_for_brier(
 # CLOB API rejects "interval too long" when only endTs is set; use a 7-day window
 _CLOB_HISTORY_WINDOW_SEC = 7 * 24 * 3600
 
+# Max chunks when fetching full series (e.g. 52 * 7 days ≈ 1 year)
+_CLOB_SERIES_MAX_CHUNKS = 52
+
+
+def fetch_prices_history_chunked(
+    base_url: str,
+    token_id: str,
+    end_ts: int,
+    window_sec: int = _CLOB_HISTORY_WINDOW_SEC,
+    max_chunks: int = _CLOB_SERIES_MAX_CHUNKS,
+) -> list[tuple[int, float]]:
+    """
+    Fetch full price history by requesting 7-day chunks backward from end_ts.
+    Returns sorted list of (t, p). Stops when a chunk is empty or max_chunks reached.
+    """
+    all_points: list[tuple[int, float]] = []
+    seen_t: set[int] = set()
+    current_end = end_ts
+    for _ in range(max_chunks):
+        start_ts = max(0, current_end - window_sec)
+        try:
+            chunk = fetch_prices_history(
+                base_url=base_url,
+                token_id=token_id,
+                start_ts=start_ts,
+                end_ts=current_end,
+            )
+        except httpx.HTTPStatusError:
+            break
+        if not chunk:
+            break
+        for t, p in chunk:
+            if t not in seen_t:
+                seen_t.add(t)
+                all_points.append((t, p))
+        if chunk[0][0] <= start_ts:
+            break
+        current_end = start_ts
+        if current_end <= 0:
+            break
+    return sorted(all_points, key=lambda x: x[0])
+
 
 def poll_clob_snapshots_to_db(
     conn,
@@ -99,3 +141,47 @@ def poll_clob_snapshots_to_db(
         n += 1
     conn.commit()
     return n
+
+
+def poll_clob_series_to_db(
+    conn,
+    base_url: str,
+    max_markets_per_run: int = 5,
+) -> int:
+    """
+    For closed markets with fewer than 2 points in price_series, fetch full history
+    in 7-day chunks and insert (condition_id, t, p). Returns total rows inserted.
+    """
+    cur = conn.execute(
+        """SELECT m.condition_id, m.token_id_yes, m.end_date_ts
+           FROM markets m
+           WHERE m.closed = 1 AND m.token_id_yes IS NOT NULL AND m.end_date_ts IS NOT NULL
+             AND (SELECT COUNT(*) FROM price_series ps WHERE ps.condition_id = m.condition_id) < 2
+           ORDER BY m.end_date_ts DESC
+           LIMIT ?""",
+        (max_markets_per_run,),
+    )
+    rows = cur.fetchall()
+    total_inserted = 0
+    for condition_id, token_id_yes, end_date_ts in rows:
+        if not token_id_yes or not end_date_ts:
+            continue
+        try:
+            history = fetch_prices_history_chunked(
+                base_url=base_url,
+                token_id=token_id_yes,
+                end_ts=end_date_ts,
+            )
+        except httpx.HTTPStatusError as e:
+            logger.debug("CLOB series skip %s: %s", condition_id[:18], e.response.status_code)
+            continue
+        if len(history) < 2:
+            continue
+        for t, p in history:
+            conn.execute(
+                "INSERT OR IGNORE INTO price_series (condition_id, t, p) VALUES (?, ?, ?)",
+                (condition_id, t, p),
+            )
+            total_inserted += 1
+    conn.commit()
+    return total_inserted
