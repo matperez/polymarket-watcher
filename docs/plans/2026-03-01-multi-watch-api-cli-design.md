@@ -63,8 +63,7 @@
 
 ## 6. Backward compatibility
 
-- If `watched_markets` is empty and env `LIVE_TOKEN_ID` / `LIVE_CONDITION_ID` are set, watcher can treat that as "legacy single watch" and subscribe to that one market (optional; can be dropped to keep implementation simple).
-- Otherwise: only `watched_markets` drives live subscriptions.
+- Only `watched_markets` drives live subscriptions. No env fallback (LIVE_* removed); add markets via CLI/API.
 
 ---
 
@@ -81,6 +80,6 @@
 - **Schema:** `schema.sql` — add `watched_markets` table; run `init_db` so it exists.
 - **API:** New module e.g. `src/polymarket_watcher/api.py` (FastAPI app, routes, DB access, set `watch_list_changed`). Main process starts API server in a thread (e.g. uvicorn) and runs main loop in main thread.
 - **State:** Shared object or module-level `watch_list_changed` and optionally current list of condition_ids/updaters accessible from both API and main loop.
-- **Main:** In `main.py`, read initial watch list from `watched_markets` (or env fallback); start WSS and PF dict; in loop, check flag and reload; start API server before loop.
+- **Main:** In `main.py`, read initial watch list from `watched_markets`; start WSS and PF dict; in loop, check flag and reload; start API server before loop.
 - **CLI:** New entrypoint `src/polymarket_watcher/cli.py` (or `cli/` package) with argparse/typer, subcommands calling httpx to API base URL.
 - **Config:** Add `API_PORT` (default 8080) and optionally `API_HOST` (default 0.0.0.0 or 127.0.0.1).

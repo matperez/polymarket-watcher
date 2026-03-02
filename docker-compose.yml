@@ -7,6 +7,4 @@ services:
       - ./data:/data
     environment:
       - DATABASE_PATH=/data/watcher.db
-      # - LIVE_TOKEN_ID=
-      # - LIVE_CONDITION_ID=
     restart: unless-stopped

@@ -26,15 +26,11 @@ logger = logging.getLogger(__name__)
 SNAPSHOT_INTERVAL_SEC = 120  # live PF snapshot every 2 min
 
 
-def _get_watch_list(conn, cfg) -> list[tuple[str, str]]:
-    """Return [(condition_id, token_id_yes), ...] from watched_markets or from config if empty."""
+def _get_watch_list(conn) -> list[tuple[str, str]]:
+    """Return [(condition_id, token_id_yes), ...] from watched_markets. Only CLI/API add markets."""
     cur = conn.execute("SELECT condition_id, token_id_yes FROM watched_markets")
     rows = cur.fetchall()
-    if rows:
-        return [(r[0], r[1]) for r in rows]
-    if cfg.live_token_id and cfg.live_condition_id:
-        return [(cfg.live_condition_id, cfg.live_token_id)]
-    return []
+    return [(r[0], r[1]) for r in rows]
 
 
 def run() -> None:
@@ -118,7 +114,7 @@ def run() -> None:
         )
 
     with db_lock:
-        watch_list = _get_watch_list(conn, cfg)
+        watch_list = _get_watch_list(conn)
     if watch_list:
         start_wss(watch_list)
 
@@ -138,7 +134,7 @@ def run() -> None:
             if api_module.watch_list_changed:
                 api_module.watch_list_changed = False
                 with db_lock:
-                    watch_list = _get_watch_list(conn, cfg)
+                    watch_list = _get_watch_list(conn)
                 start_wss(watch_list)
 
             if now - last_gamma >= cfg.gamma_poll_interval_min * 60:

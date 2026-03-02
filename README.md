@@ -13,20 +13,18 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
-## Auth and LIVE_* IDs
+## Auth and market IDs
 
 **Токен доступа не нужен.** Сервис только читает данные (рынки, цены, WebSocket). Публичные API Polymarket (Gamma, CLOB) работают без авторизации.
 
-**LIVE_TOKEN_ID и LIVE_CONDITION_ID** — публичные идентификаторы контракта, не секреты. Как получить:
+**Отслеживаемые рынки** добавляются только через CLI/API (таблица `watched_markets`). Чтобы добавить рынок, нужны `condition_id` и `token_id_yes`. Как получить:
 
 1. Узнай **slug** рынка из URL на polymarket.com (например `will-trump-win-2024`).
 2. Запроси метаданные через Gamma (без ключа):
    ```bash
    curl -s "https://gamma-api.polymarket.com/markets/slug/ВАШ_SLUG" | jq '{conditionId, clobTokenIds, question}'
    ```
-3. В ответе: **conditionId** → `LIVE_CONDITION_ID`, **clobTokenIds[0]** (токен Yes) → `LIVE_TOKEN_ID`.
-
-Без `LIVE_*` сервис тоже работает: опрос Gamma/CLOB, Brier и PF backtest по закрытым рынкам; WebSocket и live PF просто не запускаются.
+3. В ответе: **conditionId** → `condition_id`, **clobTokenIds[0]** (токен Yes) → `token_id_yes` для команды `polymarket-watcher-cli add`.
 
 ## Config (env)
 
@@ -37,9 +35,6 @@ pip install -e ".[dev]"
 | `CLOB_BASE_URL` | `https://clob.polymarket.com` | CLOB API base |
 | `API_HOST` | `0.0.0.0` | Bind address for HTTP API |
 | `API_PORT` | 8080 | Port for HTTP API |
-| `LIVE_MARKET_SLUG` | — | Slug for live WebSocket (optional) |
-| `LIVE_TOKEN_ID` | — | Token ID (Yes) for live market; required with `LIVE_CONDITION_ID` for WSS |
-| `LIVE_CONDITION_ID` | — | Condition ID for live market (for DB and live PF) |
 | `GAMMA_POLL_INTERVAL_MIN` | 10 | Minutes between Gamma polls |
 | `CLOB_POLL_INTERVAL_MIN` | 15 | Minutes between CLOB price fetches |
 | `BRIER_JOB_INTERVAL_MIN` | 15 | Minutes between Brier job runs |
@@ -89,7 +84,7 @@ WATCHER_API_URL=http://127.0.0.1:8080 polymarket-watcher-cli list
 polymarket-watcher-cli --api http://127.0.0.1:8080 list
 ```
 
-Watched markets are stored in the same SQLite DB; if the table `watched_markets` has rows, they drive live WebSocket + PF. If it is empty, env `LIVE_TOKEN_ID` / `LIVE_CONDITION_ID` are used as a single legacy market (if set).
+Watched markets are stored in the same SQLite DB; only rows in `watched_markets` drive live WebSocket + PF.
 
 ## Docker
 
@@ -101,18 +96,7 @@ docker build -t polymarket-watcher .
 docker run -v $(pwd)/data:/data -p 8080:8080 -e DATABASE_PATH=/data/watcher.db polymarket-watcher
 ```
 
-With live WebSocket and PF (legacy single market):
-
-```bash
-docker run -v $(pwd)/data:/data \
-  -e DATABASE_PATH=/data/watcher.db \
-  -e LIVE_TOKEN_ID=<token_id_yes> \
-  -e LIVE_CONDITION_ID=<condition_id> \
-  -p 8080:8080 \
-  polymarket-watcher
-```
-
-To manage watched markets via API from the host, expose the API port (`-p 8080:8080`) and use the CLI with `WATCHER_API_URL=http://localhost:8080` (or the host IP). Data is stored in the mounted volume at `/data/watcher.db`.
+Add watched markets from the host with the CLI: `polymarket-watcher-cli --api http://localhost:8080 add <condition_id> <token_id_yes> [--slug name]`. Data is stored in the mounted volume at `/data/watcher.db`.
 
 ## Tests and lint
 
